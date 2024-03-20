@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client List</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <style>
+    /* Custom CSS styles */
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      border: 1px solid black;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Client List</h1>
+    <select id="filter">
+      <option value="all">All Clients</option>
+      <option value="managers">Managers Only</option>
+      <option value="non-managers">Non-Managers Only</option>
+    </select>
+    <ul id="client-list"></ul>
+  </div>
+
+  <div id="popup" class="animate__animated animate__fadeIn">
+    <h2 id="popup-name"></h2>
+    <p id="popup-points"></p>
+    <p id="popup-address"></p>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dotween/1.0.0/dotween.umd.js"></script>
+  <script>
+    // Fetch JSON data from the API
+    $.getJSON("https://qa.sunbasedata.com/sunbase/portal/api/assignment.jsp?cmd=client_data", function(data) {
+      const clients = data.clients;
+      const clientData = data.data;
+
+      // Populate client list
+      function populateList(filter) {
+        $("#client-list").empty();
+        clients.forEach(client => {
+          const clientInfo = clientData[client.id];
+          if (!clientInfo) return; // Skip if client info is not available
+          if (filter === "all" || (filter === "managers" && client.isManager) || (filter === "non-managers" && !client.isManager)) {
+            const listItem = $("<li>").text(`${clientInfo.name} - ${clientInfo.points}`).click(function() {
+              showPopup(clientInfo);
+            });
+            $("#client-list").append(listItem);
+          }
+        });
+      }
+
+      // Show popup with client details
+      function showPopup(clientInfo) {
+        $("#popup-name").text(clientInfo.name || "Name not available");
+        $("#popup-points").text(`Points: ${clientInfo.points || "Points not available"}`);
+        $("#popup-address").text(`Address: ${clientInfo.address || "Address not available"}`);
+        $("#popup").fadeIn().delay(2000).fadeOut();
+      }
+
+      // Initial population
+      populateList("all");
+
+      // Filter change event
+      $("#filter").change(function() {
+        const filter = $(this).val();
+        populateList(filter);
+      });
+    });
+  </script>
+</body>
+</html>
